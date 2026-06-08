@@ -1,0 +1,211 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: de_DE\n"
+
+msgid "NextGuard"
+msgstr "NextGuard"
+
+msgid "NextGuard Security"
+msgstr "NextGuard Security"
+
+msgid "Scan now"
+msgstr "Jetzt scannen"
+
+msgid "Connect & scan"
+msgstr "Verbinden & scannen"
+
+msgid "Connect &amp; scan"
+msgstr "Verbinden & scannen"
+
+msgid "Connect"
+msgstr "Verbinden"
+
+msgid "API Key"
+msgstr "API-Key"
+
+msgid "Status"
+msgstr "Status"
+
+msgid "Manual Sync"
+msgstr "Manuelle Synchronisierung"
+
+msgid "Sync Now"
+msgstr "Jetzt synchronisieren"
+
+msgid "Connected"
+msgstr "Verbunden"
+
+msgid "Severity"
+msgstr "Schweregrad"
+
+msgid "Component"
+msgstr "Komponente"
+
+msgid "Installed"
+msgstr "Installiert"
+
+msgid "Vulnerability"
+msgstr "Schwachstelle"
+
+msgid "Fixed in"
+msgstr "Behoben in"
+
+msgid "Expires in"
+msgstr "Läuft ab in"
+
+msgid "minutes"
+msgstr "Minuten"
+
+msgid "Free scan active — no account needed"
+msgstr "Kostenloser Scan aktiv — kein Konto nötig"
+
+msgid "Vulnerabilities detected on your site"
+msgstr "Auf deiner Seite erkannte Schwachstellen"
+
+msgid "%d vulnerabilities found"
+msgstr "%d Schwachstellen gefunden"
+
+msgid "+%d more vulnerabilities hidden — register free to see the full report."
+msgstr "+%d weitere Schwachstellen verborgen — kostenlos registrieren für den vollen Bericht."
+
+msgid "Register free for the full report + continuous monitoring"
+msgstr "Kostenlos registrieren für den vollen Bericht + laufende Überwachung"
+
+msgid "No known vulnerabilities found on your site."
+msgstr "Keine bekannten Schwachstellen auf deiner Seite gefunden."
+
+msgid "This free key has %d scan(s) left and expires in 2 hours. When it runs out, generate a new free key on the home page or register for unlimited continuous monitoring."
+msgstr "Dieser kostenlose Key hat noch %d Scan(s) und läuft in 2 Stunden ab. Danach erzeuge einen neuen kostenlosen Key auf der Startseite oder registriere dich für unbegrenzte Überwachung."
+
+msgid "Free scan active (no account). Register at NextGuard for continuous monitoring + alerts."
+msgstr "Kostenloser Scan aktiv (kein Konto). Registriere dich bei NextGuard für laufende Überwachung + Alerts."
+
+msgid "Not configured. Connect above to get started."
+msgstr "Nicht konfiguriert. Verbinde oben, um zu starten."
+
+msgid "Connected via device token. Sync runs daily automatically."
+msgstr "Über Device-Token verbunden. Sync läuft täglich automatisch."
+
+msgid "Legacy configuration — reconnect using the Device Auth Flow above."
+msgstr "Alte Konfiguration — über den Device-Auth-Flow oben neu verbinden."
+
+msgid "Connect a different project"
+msgstr "Anderes Projekt verbinden"
+
+msgid "Paste an API key to scan this site. <strong>No paid plan required.</strong>"
+msgstr "Füge einen API-Key ein, um diese Seite zu scannen. <strong>Kein kostenpflichtiger Plan nötig.</strong>"
+
+msgid "Free keys start with <code>vs_pk_anon_</code> (temporary). Account keys start with <code>vs_pk_</code>."
+msgstr "Kostenlose Keys beginnen mit <code>vs_pk_anon_</code> (temporär). Konto-Keys mit <code>vs_pk_</code>."
+
+msgid "Sync triggered — check your NextGuard dashboard in a few seconds."
+msgstr "Sync ausgelöst — prüfe dein NextGuard-Dashboard in ein paar Sekunden."
+
+msgid "Connected. Syncing your site… check the scan on the page where you got this key."
+msgstr "Verbunden. Synchronisiere deine Seite… prüfe den Scan auf der Seite, wo du den Key bekommen hast."
+
+msgid "<strong>Free, no account:</strong> open <a href=\"%s/#scan\" target=\"_blank\">nextguardhq.com → Free scan</a>, run the free CMS scan and copy the key it gives you — it works for a few scans, no sign-up."
+msgstr "<strong>Kostenlos, kein Konto:</strong> öffne <a href=\"%s/#scan\" target=\"_blank\">nextguardhq.com → Kostenloser Scan</a>, führe den kostenlosen CMS-Scan aus und kopiere den Key — gilt für einige Scans, ohne Anmeldung."
+
+msgid "<strong>With a NextGuard account:</strong> paste your key from <a href=\"%s/account\" target=\"_blank\">Account → API Keys</a> to link this site to a project for continuous monitoring."
+msgstr "<strong>Mit NextGuard-Konto:</strong> füge deinen Key aus <a href=\"%s/account\" target=\"_blank\">Konto → API-Keys</a> ein, um diese Seite mit einem Projekt für laufende Überwachung zu verknüpfen."
+
+msgid "Have a paid NextGuard account? You can connect it with your API key using the device-authorization flow below — that links this site to a project for ongoing monitoring."
+msgstr "Hast du ein kostenpflichtiges NextGuard-Konto? Verbinde es mit deinem API-Key über den Device-Auth-Flow unten — das verknüpft diese Seite mit einem Projekt für laufende Überwachung."
+
+msgid "Automatically syncs your installed plugins and themes to <a href=\"%s\" target=\"_blank\">NextGuard</a> for continuous CVE monitoring."
+msgstr "Synchronisiert deine installierten Plugins und Themes automatisch mit <a href=\"%s\" target=\"_blank\">NextGuard</a> für laufende CVE-Überwachung."
+
+msgid "<strong>NextGuard:</strong> Your site is using a legacy API key configuration. Please reconnect below using the new Device Authorization Flow."
+msgstr "<strong>NextGuard:</strong> Deine Seite nutzt eine alte API-Key-Konfiguration. Verbinde unten mit dem neuen Device Authorization Flow neu."
+
+msgid "Go to <a href=\"%s/account\" target=\"_blank\">nextguardhq.com/account → Connected Devices</a> and enter this code:"
+msgstr "Gehe zu <a href=\"%s/account\" target=\"_blank\">nextguardhq.com/account → Connected Devices</a> und gib diesen Code ein:"
+
+msgid "I've authorized it — Continue"
+msgstr "Ich habe es autorisiert — Weiter"
+
+msgid "Project: <strong>%s</strong> <span style=\"color:#6b7280;font-size:12px\">(%s)</span>"
+msgstr "Projekt: <strong>%s</strong> <span style=\"color:#6b7280;font-size:12px\">(%s)</span>"
+
+msgid "Last sync: <strong>%s</strong>"
+msgstr "Letzter Sync: <strong>%s</strong>"
+
+msgid "Please enter your API key."
+msgstr "Bitte gib deinen API-Key ein."
+
+msgid "API key is required."
+msgstr "API-Key ist erforderlich."
+
+msgid "Invalid API key. Keys must start with vs_pk_"
+msgstr "Ungültiger API-Key. Muss mit vs_pk_ beginnen"
+
+msgid "Failed to get activation code from NextGuard. Check your API key."
+msgstr "Aktivierungscode von NextGuard konnte nicht abgerufen werden. Prüfe deinen API-Key."
+
+msgid "Request failed."
+msgstr "Anfrage fehlgeschlagen."
+
+msgid "Network error. Please try again."
+msgstr "Netzwerkfehler. Bitte erneut versuchen."
+
+msgid "Error checking status."
+msgstr "Fehler beim Prüfen des Status."
+
+msgid "Code expired. Please go back and request a new one."
+msgstr "Code abgelaufen. Geh zurück und fordere einen neuen an."
+
+msgid "No pending activation. Please request a new code."
+msgstr "Keine ausstehende Aktivierung. Fordere einen neuen Code an."
+
+msgid "Unauthorized"
+msgstr "Nicht autorisiert"
+
+msgid "Last scan: %s"
+msgstr "Letzter Scan: %s"
+
+msgid "Why connect a NextGuard account?"
+msgstr "Warum ein NextGuard-Konto verbinden?"
+
+msgid "This free scan only shows a teaser and the key expires in 2 hours. With an account this site becomes a monitored project: the full report, automatic re-scans, and email alerts whenever a new CVE hits your plugins or themes."
+msgstr "Dieser kostenlose Scan zeigt nur eine Vorschau und der Key läuft in 2 Stunden ab. Mit einem Konto wird diese Seite zu einem überwachten Projekt: der vollständige Bericht, automatische Re-Scans und E-Mail-Benachrichtigungen, sobald ein neuer CVE deine Plugins oder Themes betrifft."
+
+msgid "Already have an account? Paste your Account key (vs_pk_…) from Account → API Keys above to link this site to an existing project."
+msgstr "Schon ein Konto? Füge oben deinen Konto-Key (vs_pk_…) aus Konto → API-Keys ein, um diese Seite mit einem bestehenden Projekt zu verknüpfen."
+
+msgid "Create free account"
+msgstr "Kostenloses Konto erstellen"
+
+msgid "Full vulnerability report (no blur)"
+msgstr "Vollständiger Schwachstellenbericht (ohne Unschärfe)"
+
+msgid "1 monitored project"
+msgstr "1 überwachtes Projekt"
+
+msgid "CVE database access"
+msgstr "Zugriff auf die CVE-Datenbank"
+
+msgid "Get Monitoring"
+msgstr "Monitoring holen"
+
+msgid "Continuous automatic re-scans"
+msgstr "Kontinuierliche automatische Re-Scans"
+
+msgid "Email alerts on new CVEs"
+msgstr "E-Mail-Benachrichtigungen bei neuen CVEs"
+
+msgid "Unlimited scans, no expiry"
+msgstr "Unbegrenzte Scans, kein Ablauf"
+
+msgid "Get Starter"
+msgstr "Starter holen"
+
+msgid "Everything in Monitoring"
+msgstr "Alles aus Monitoring"
+
+msgid "Multiple projects & environments"
+msgstr "Mehrere Projekte & Umgebungen"
+
+msgid "Scan history & auto-patching"
+msgstr "Scan-Verlauf & Auto-Patching"

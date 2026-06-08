@@ -1,0 +1,211 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: ja\n"
+
+msgid "NextGuard"
+msgstr "NextGuard"
+
+msgid "NextGuard Security"
+msgstr "NextGuard Security"
+
+msgid "Scan now"
+msgstr "今すぐスキャン"
+
+msgid "Connect & scan"
+msgstr "接続してスキャン"
+
+msgid "Connect &amp; scan"
+msgstr "接続してスキャン"
+
+msgid "Connect"
+msgstr "接続"
+
+msgid "API Key"
+msgstr "APIキー"
+
+msgid "Status"
+msgstr "ステータス"
+
+msgid "Manual Sync"
+msgstr "手動同期"
+
+msgid "Sync Now"
+msgstr "今すぐ同期"
+
+msgid "Connected"
+msgstr "接続済み"
+
+msgid "Severity"
+msgstr "深刻度"
+
+msgid "Component"
+msgstr "コンポーネント"
+
+msgid "Installed"
+msgstr "インストール済み"
+
+msgid "Vulnerability"
+msgstr "脆弱性"
+
+msgid "Fixed in"
+msgstr "修正バージョン"
+
+msgid "Expires in"
+msgstr "有効期限"
+
+msgid "minutes"
+msgstr "分"
+
+msgid "Free scan active — no account needed"
+msgstr "無料スキャン有効 — アカウント不要"
+
+msgid "Vulnerabilities detected on your site"
+msgstr "あなたのサイトで検出された脆弱性"
+
+msgid "%d vulnerabilities found"
+msgstr "%d 件の脆弱性を検出"
+
+msgid "+%d more vulnerabilities hidden — register free to see the full report."
+msgstr "他 +%d 件は非表示 — 無料登録で全レポートを表示。"
+
+msgid "Register free for the full report + continuous monitoring"
+msgstr "無料登録で全レポート＋継続モニタリング"
+
+msgid "No known vulnerabilities found on your site."
+msgstr "あなたのサイトに既知の脆弱性は見つかりませんでした。"
+
+msgid "This free key has %d scan(s) left and expires in 2 hours. When it runs out, generate a new free key on the home page or register for unlimited continuous monitoring."
+msgstr "この無料キーは残り %d 回、2時間で期限切れです。なくなったらホームで新しい無料キーを生成するか、無制限の継続モニタリングに登録してください。"
+
+msgid "Free scan active (no account). Register at NextGuard for continuous monitoring + alerts."
+msgstr "無料スキャン有効（アカウントなし）。継続モニタリング＋アラートはNextGuardに登録。"
+
+msgid "Not configured. Connect above to get started."
+msgstr "未設定です。上で接続して開始してください。"
+
+msgid "Connected via device token. Sync runs daily automatically."
+msgstr "デバイストークンで接続済み。同期は毎日自動実行。"
+
+msgid "Legacy configuration — reconnect using the Device Auth Flow above."
+msgstr "旧設定 — 上のデバイス認証フローで再接続してください。"
+
+msgid "Connect a different project"
+msgstr "別のプロジェクトを接続"
+
+msgid "Paste an API key to scan this site. <strong>No paid plan required.</strong>"
+msgstr "このサイトをスキャンするにはAPIキーを貼り付けてください。<strong>有料プラン不要。</strong>"
+
+msgid "Free keys start with <code>vs_pk_anon_</code> (temporary). Account keys start with <code>vs_pk_</code>."
+msgstr "無料キーは <code>vs_pk_anon_</code>（一時的）、アカウントキーは <code>vs_pk_</code> で始まります。"
+
+msgid "Sync triggered — check your NextGuard dashboard in a few seconds."
+msgstr "同期を実行 — 数秒後にNextGuardダッシュボードを確認してください。"
+
+msgid "Connected. Syncing your site… check the scan on the page where you got this key."
+msgstr "接続しました。サイトを同期中… キーを取得したページでスキャンを確認してください。"
+
+msgid "<strong>Free, no account:</strong> open <a href=\"%s/#scan\" target=\"_blank\">nextguardhq.com → Free scan</a>, run the free CMS scan and copy the key it gives you — it works for a few scans, no sign-up."
+msgstr "<strong>無料・アカウント不要:</strong> <a href=\"%s/#scan\" target=\"_blank\">nextguardhq.com → 無料スキャン</a> を開き、無料CMSスキャンを実行してキーをコピー — 数回分、登録不要。"
+
+msgid "<strong>With a NextGuard account:</strong> paste your key from <a href=\"%s/account\" target=\"_blank\">Account → API Keys</a> to link this site to a project for continuous monitoring."
+msgstr "<strong>NextGuardアカウントあり:</strong> <a href=\"%s/account\" target=\"_blank\">アカウント → APIキー</a> のキーを貼り付けて、このサイトを継続モニタリングのプロジェクトに紐付けます。"
+
+msgid "Have a paid NextGuard account? You can connect it with your API key using the device-authorization flow below — that links this site to a project for ongoing monitoring."
+msgstr "有料のNextGuardアカウントをお持ちですか？下のデバイス認証フローでAPIキーを使って接続すると、このサイトが継続モニタリングのプロジェクトに紐付きます。"
+
+msgid "Automatically syncs your installed plugins and themes to <a href=\"%s\" target=\"_blank\">NextGuard</a> for continuous CVE monitoring."
+msgstr "インストール済みのプラグインとテーマを <a href=\"%s\" target=\"_blank\">NextGuard</a> に自動同期し、CVEを継続監視します。"
+
+msgid "<strong>NextGuard:</strong> Your site is using a legacy API key configuration. Please reconnect below using the new Device Authorization Flow."
+msgstr "<strong>NextGuard:</strong> サイトは旧APIキー設定を使用しています。下の新しいデバイス認証フローで再接続してください。"
+
+msgid "Go to <a href=\"%s/account\" target=\"_blank\">nextguardhq.com/account → Connected Devices</a> and enter this code:"
+msgstr "<a href=\"%s/account\" target=\"_blank\">nextguardhq.com/account → Connected Devices</a> でこのコードを入力してください:"
+
+msgid "I've authorized it — Continue"
+msgstr "承認しました — 続行"
+
+msgid "Project: <strong>%s</strong> <span style=\"color:#6b7280;font-size:12px\">(%s)</span>"
+msgstr "プロジェクト: <strong>%s</strong> <span style=\"color:#6b7280;font-size:12px\">(%s)</span>"
+
+msgid "Last sync: <strong>%s</strong>"
+msgstr "最終同期: <strong>%s</strong>"
+
+msgid "Please enter your API key."
+msgstr "APIキーを入力してください。"
+
+msgid "API key is required."
+msgstr "APIキーは必須です。"
+
+msgid "Invalid API key. Keys must start with vs_pk_"
+msgstr "無効なAPIキーです。vs_pk_ で始まる必要があります"
+
+msgid "Failed to get activation code from NextGuard. Check your API key."
+msgstr "NextGuardから認証コードを取得できませんでした。APIキーを確認してください。"
+
+msgid "Request failed."
+msgstr "リクエストに失敗しました。"
+
+msgid "Network error. Please try again."
+msgstr "ネットワークエラー。もう一度お試しください。"
+
+msgid "Error checking status."
+msgstr "ステータス確認エラー。"
+
+msgid "Code expired. Please go back and request a new one."
+msgstr "コードの期限切れです。戻って新しいコードを取得してください。"
+
+msgid "No pending activation. Please request a new code."
+msgstr "保留中の認証はありません。新しいコードを取得してください。"
+
+msgid "Unauthorized"
+msgstr "権限がありません"
+
+msgid "Last scan: %s"
+msgstr "最終スキャン: %s"
+
+msgid "Why connect a NextGuard account?"
+msgstr "NextGuardアカウントを接続する理由"
+
+msgid "This free scan only shows a teaser and the key expires in 2 hours. With an account this site becomes a monitored project: the full report, automatic re-scans, and email alerts whenever a new CVE hits your plugins or themes."
+msgstr "この無料スキャンはプレビューのみで、キーは2時間で期限切れになります。アカウントがあれば、このサイトは監視対象のプロジェクトになります：完全なレポート、自動再スキャン、新しいCVEがプラグインやテーマに影響するたびにメールアラート。"
+
+msgid "Already have an account? Paste your Account key (vs_pk_…) from Account → API Keys above to link this site to an existing project."
+msgstr "すでにアカウントをお持ちですか？上の アカウント → APIキー からアカウントキー（vs_pk_…）を貼り付けて、このサイトを既存のプロジェクトに紐付けてください。"
+
+msgid "Create free account"
+msgstr "無料アカウント作成"
+
+msgid "Full vulnerability report (no blur)"
+msgstr "完全な脆弱性レポート（ぼかしなし）"
+
+msgid "1 monitored project"
+msgstr "監視プロジェクト 1 件"
+
+msgid "CVE database access"
+msgstr "CVEデータベースへのアクセス"
+
+msgid "Get Monitoring"
+msgstr "Monitoring を入手"
+
+msgid "Continuous automatic re-scans"
+msgstr "継続的な自動再スキャン"
+
+msgid "Email alerts on new CVEs"
+msgstr "新しいCVEのメールアラート"
+
+msgid "Unlimited scans, no expiry"
+msgstr "無制限スキャン、期限なし"
+
+msgid "Get Starter"
+msgstr "Starter を入手"
+
+msgid "Everything in Monitoring"
+msgstr "Monitoring の全機能"
+
+msgid "Multiple projects & environments"
+msgstr "複数のプロジェクトと環境"
+
+msgid "Scan history & auto-patching"
+msgstr "スキャン履歴と自動パッチ"

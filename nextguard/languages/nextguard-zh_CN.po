@@ -1,0 +1,211 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: zh_CN\n"
+
+msgid "NextGuard"
+msgstr "NextGuard"
+
+msgid "NextGuard Security"
+msgstr "NextGuard 安全"
+
+msgid "Scan now"
+msgstr "立即扫描"
+
+msgid "Connect & scan"
+msgstr "连接并扫描"
+
+msgid "Connect &amp; scan"
+msgstr "连接并扫描"
+
+msgid "Connect"
+msgstr "连接"
+
+msgid "API Key"
+msgstr "API 密钥"
+
+msgid "Status"
+msgstr "状态"
+
+msgid "Manual Sync"
+msgstr "手动同步"
+
+msgid "Sync Now"
+msgstr "立即同步"
+
+msgid "Connected"
+msgstr "已连接"
+
+msgid "Severity"
+msgstr "严重程度"
+
+msgid "Component"
+msgstr "组件"
+
+msgid "Installed"
+msgstr "已安装"
+
+msgid "Vulnerability"
+msgstr "漏洞"
+
+msgid "Fixed in"
+msgstr "修复于"
+
+msgid "Expires in"
+msgstr "有效期"
+
+msgid "minutes"
+msgstr "分钟"
+
+msgid "Free scan active — no account needed"
+msgstr "免费扫描已激活 — 无需账户"
+
+msgid "Vulnerabilities detected on your site"
+msgstr "在你的网站检测到的漏洞"
+
+msgid "%d vulnerabilities found"
+msgstr "发现 %d 个漏洞"
+
+msgid "+%d more vulnerabilities hidden — register free to see the full report."
+msgstr "还有 +%d 个漏洞被隐藏 — 免费注册查看完整报告。"
+
+msgid "Register free for the full report + continuous monitoring"
+msgstr "免费注册获取完整报告 + 持续监控"
+
+msgid "No known vulnerabilities found on your site."
+msgstr "在你的网站未发现已知漏洞。"
+
+msgid "This free key has %d scan(s) left and expires in 2 hours. When it runs out, generate a new free key on the home page or register for unlimited continuous monitoring."
+msgstr "此免费密钥还剩 %d 次扫描，2 小时后过期。用完后请在首页生成新的免费密钥，或注册以获得无限持续监控。"
+
+msgid "Free scan active (no account). Register at NextGuard for continuous monitoring + alerts."
+msgstr "免费扫描已激活（无账户）。在 NextGuard 注册以获得持续监控 + 警报。"
+
+msgid "Not configured. Connect above to get started."
+msgstr "未配置。请在上方连接以开始。"
+
+msgid "Connected via device token. Sync runs daily automatically."
+msgstr "已通过设备令牌连接。每天自动同步。"
+
+msgid "Legacy configuration — reconnect using the Device Auth Flow above."
+msgstr "旧配置 — 请使用上方的设备授权流程重新连接。"
+
+msgid "Connect a different project"
+msgstr "连接其他项目"
+
+msgid "Paste an API key to scan this site. <strong>No paid plan required.</strong>"
+msgstr "粘贴 API 密钥以扫描此站点。<strong>无需付费套餐。</strong>"
+
+msgid "Free keys start with <code>vs_pk_anon_</code> (temporary). Account keys start with <code>vs_pk_</code>."
+msgstr "免费密钥以 <code>vs_pk_anon_</code> 开头（临时）。账户密钥以 <code>vs_pk_</code> 开头。"
+
+msgid "Sync triggered — check your NextGuard dashboard in a few seconds."
+msgstr "已触发同步 — 几秒后查看你的 NextGuard 仪表板。"
+
+msgid "Connected. Syncing your site… check the scan on the page where you got this key."
+msgstr "已连接。正在同步你的站点… 在获取此密钥的页面查看扫描结果。"
+
+msgid "<strong>Free, no account:</strong> open <a href=\"%s/#scan\" target=\"_blank\">nextguardhq.com → Free scan</a>, run the free CMS scan and copy the key it gives you — it works for a few scans, no sign-up."
+msgstr "<strong>免费，无需账户：</strong>打开 <a href=\"%s/#scan\" target=\"_blank\">nextguardhq.com → 免费扫描</a>，运行免费 CMS 扫描并复制密钥 — 可用几次，无需注册。"
+
+msgid "<strong>With a NextGuard account:</strong> paste your key from <a href=\"%s/account\" target=\"_blank\">Account → API Keys</a> to link this site to a project for continuous monitoring."
+msgstr "<strong>拥有 NextGuard 账户：</strong>从 <a href=\"%s/account\" target=\"_blank\">账户 → API 密钥</a> 粘贴你的密钥，将此站点关联到项目以持续监控。"
+
+msgid "Have a paid NextGuard account? You can connect it with your API key using the device-authorization flow below — that links this site to a project for ongoing monitoring."
+msgstr "拥有付费 NextGuard 账户？可使用下方的设备授权流程通过 API 密钥连接 — 将此站点关联到项目以持续监控。"
+
+msgid "Automatically syncs your installed plugins and themes to <a href=\"%s\" target=\"_blank\">NextGuard</a> for continuous CVE monitoring."
+msgstr "自动将你已安装的插件和主题同步到 <a href=\"%s\" target=\"_blank\">NextGuard</a> 进行持续 CVE 监控。"
+
+msgid "<strong>NextGuard:</strong> Your site is using a legacy API key configuration. Please reconnect below using the new Device Authorization Flow."
+msgstr "<strong>NextGuard：</strong>你的站点使用旧的 API 密钥配置。请使用下方新的设备授权流程重新连接。"
+
+msgid "Go to <a href=\"%s/account\" target=\"_blank\">nextguardhq.com/account → Connected Devices</a> and enter this code:"
+msgstr "前往 <a href=\"%s/account\" target=\"_blank\">nextguardhq.com/account → Connected Devices</a> 并输入此代码："
+
+msgid "I've authorized it — Continue"
+msgstr "我已授权 — 继续"
+
+msgid "Project: <strong>%s</strong> <span style=\"color:#6b7280;font-size:12px\">(%s)</span>"
+msgstr "项目：<strong>%s</strong> <span style=\"color:#6b7280;font-size:12px\">(%s)</span>"
+
+msgid "Last sync: <strong>%s</strong>"
+msgstr "上次同步：<strong>%s</strong>"
+
+msgid "Please enter your API key."
+msgstr "请输入你的 API 密钥。"
+
+msgid "API key is required."
+msgstr "需要 API 密钥。"
+
+msgid "Invalid API key. Keys must start with vs_pk_"
+msgstr "API 密钥无效。必须以 vs_pk_ 开头"
+
+msgid "Failed to get activation code from NextGuard. Check your API key."
+msgstr "无法从 NextGuard 获取激活码。请检查你的 API 密钥。"
+
+msgid "Request failed."
+msgstr "请求失败。"
+
+msgid "Network error. Please try again."
+msgstr "网络错误。请重试。"
+
+msgid "Error checking status."
+msgstr "检查状态出错。"
+
+msgid "Code expired. Please go back and request a new one."
+msgstr "代码已过期。请返回并申请新代码。"
+
+msgid "No pending activation. Please request a new code."
+msgstr "没有待处理的激活。请申请新代码。"
+
+msgid "Unauthorized"
+msgstr "未授权"
+
+msgid "Last scan: %s"
+msgstr "上次扫描：%s"
+
+msgid "Why connect a NextGuard account?"
+msgstr "为何要连接 NextGuard 账户？"
+
+msgid "This free scan only shows a teaser and the key expires in 2 hours. With an account this site becomes a monitored project: the full report, automatic re-scans, and email alerts whenever a new CVE hits your plugins or themes."
+msgstr "此免费扫描仅显示预览，密钥将在 2 小时后过期。拥有账户后，此站点将成为受监控项目：完整报告、自动重新扫描，以及每当新 CVE 影响你的插件或主题时的邮件提醒。"
+
+msgid "Already have an account? Paste your Account key (vs_pk_…) from Account → API Keys above to link this site to an existing project."
+msgstr "已有账户？从上方 账户 → API 密钥 粘贴你的账户密钥（vs_pk_…），将此站点关联到现有项目。"
+
+msgid "Create free account"
+msgstr "创建免费账户"
+
+msgid "Full vulnerability report (no blur)"
+msgstr "完整漏洞报告（无模糊）"
+
+msgid "1 monitored project"
+msgstr "1 个受监控项目"
+
+msgid "CVE database access"
+msgstr "CVE 数据库访问"
+
+msgid "Get Monitoring"
+msgstr "获取 Monitoring"
+
+msgid "Continuous automatic re-scans"
+msgstr "持续自动重新扫描"
+
+msgid "Email alerts on new CVEs"
+msgstr "新 CVE 邮件提醒"
+
+msgid "Unlimited scans, no expiry"
+msgstr "无限扫描，永不过期"
+
+msgid "Get Starter"
+msgstr "获取 Starter"
+
+msgid "Everything in Monitoring"
+msgstr "包含 Monitoring 全部"
+
+msgid "Multiple projects & environments"
+msgstr "多个项目和环境"
+
+msgid "Scan history & auto-patching"
+msgstr "扫描历史和自动修补"

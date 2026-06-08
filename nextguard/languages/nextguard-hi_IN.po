@@ -1,0 +1,211 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: hi_IN\n"
+
+msgid "NextGuard"
+msgstr "NextGuard"
+
+msgid "NextGuard Security"
+msgstr "NextGuard सुरक्षा"
+
+msgid "Scan now"
+msgstr "अभी स्कैन करें"
+
+msgid "Connect & scan"
+msgstr "कनेक्ट करें और स्कैन करें"
+
+msgid "Connect &amp; scan"
+msgstr "कनेक्ट करें और स्कैन करें"
+
+msgid "Connect"
+msgstr "कनेक्ट करें"
+
+msgid "API Key"
+msgstr "API Key"
+
+msgid "Status"
+msgstr "स्थिति"
+
+msgid "Manual Sync"
+msgstr "मैनुअल सिंक"
+
+msgid "Sync Now"
+msgstr "अभी सिंक करें"
+
+msgid "Connected"
+msgstr "कनेक्ट हो गया"
+
+msgid "Severity"
+msgstr "गंभीरता"
+
+msgid "Component"
+msgstr "घटक"
+
+msgid "Installed"
+msgstr "इंस्टॉल"
+
+msgid "Vulnerability"
+msgstr "कमज़ोरी"
+
+msgid "Fixed in"
+msgstr "ठीक किया गया"
+
+msgid "Expires in"
+msgstr "समाप्त होगा"
+
+msgid "minutes"
+msgstr "मिनट"
+
+msgid "Free scan active — no account needed"
+msgstr "मुफ़्त स्कैन सक्रिय — खाते की ज़रूरत नहीं"
+
+msgid "Vulnerabilities detected on your site"
+msgstr "आपकी साइट पर पाई गई कमज़ोरियाँ"
+
+msgid "%d vulnerabilities found"
+msgstr "%d कमज़ोरियाँ मिलीं"
+
+msgid "+%d more vulnerabilities hidden — register free to see the full report."
+msgstr "+%d और कमज़ोरियाँ छिपी हैं — पूरी रिपोर्ट के लिए मुफ़्त रजिस्टर करें।"
+
+msgid "Register free for the full report + continuous monitoring"
+msgstr "पूरी रिपोर्ट + निरंतर निगरानी के लिए मुफ़्त रजिस्टर करें"
+
+msgid "No known vulnerabilities found on your site."
+msgstr "आपकी साइट पर कोई ज्ञात कमज़ोरी नहीं मिली।"
+
+msgid "This free key has %d scan(s) left and expires in 2 hours. When it runs out, generate a new free key on the home page or register for unlimited continuous monitoring."
+msgstr "इस मुफ़्त key में %d स्कैन बचे हैं और 2 घंटे में समाप्त हो जाएगी। समाप्त होने पर होम पेज पर नई मुफ़्त key बनाएं या असीमित निगरानी के लिए रजिस्टर करें।"
+
+msgid "Free scan active (no account). Register at NextGuard for continuous monitoring + alerts."
+msgstr "मुफ़्त स्कैन सक्रिय (बिना खाते)। निरंतर निगरानी + अलर्ट के लिए NextGuard पर रजिस्टर करें।"
+
+msgid "Not configured. Connect above to get started."
+msgstr "कॉन्फ़िगर नहीं है। शुरू करने के लिए ऊपर कनेक्ट करें।"
+
+msgid "Connected via device token. Sync runs daily automatically."
+msgstr "डिवाइस टोकन से कनेक्ट। सिंक रोज़ अपने आप चलता है।"
+
+msgid "Legacy configuration — reconnect using the Device Auth Flow above."
+msgstr "पुराना कॉन्फ़िगरेशन — ऊपर Device Auth Flow से फिर से कनेक्ट करें।"
+
+msgid "Connect a different project"
+msgstr "दूसरा प्रोजेक्ट कनेक्ट करें"
+
+msgid "Paste an API key to scan this site. <strong>No paid plan required.</strong>"
+msgstr "इस साइट को स्कैन करने के लिए API key पेस्ट करें। <strong>किसी पेड प्लान की ज़रूरत नहीं।</strong>"
+
+msgid "Free keys start with <code>vs_pk_anon_</code> (temporary). Account keys start with <code>vs_pk_</code>."
+msgstr "मुफ़्त keys <code>vs_pk_anon_</code> से शुरू होती हैं (अस्थायी)। खाता keys <code>vs_pk_</code> से।"
+
+msgid "Sync triggered — check your NextGuard dashboard in a few seconds."
+msgstr "सिंक शुरू — कुछ सेकंड में अपना NextGuard डैशबोर्ड देखें।"
+
+msgid "Connected. Syncing your site… check the scan on the page where you got this key."
+msgstr "कनेक्ट हो गया। आपकी साइट सिंक हो रही है… जहाँ से key ली वहाँ स्कैन देखें।"
+
+msgid "<strong>Free, no account:</strong> open <a href=\"%s/#scan\" target=\"_blank\">nextguardhq.com → Free scan</a>, run the free CMS scan and copy the key it gives you — it works for a few scans, no sign-up."
+msgstr "<strong>मुफ़्त, बिना खाता:</strong> <a href=\"%s/#scan\" target=\"_blank\">nextguardhq.com → मुफ़्त स्कैन</a> खोलें, मुफ़्त CMS स्कैन चलाएं और मिली key कॉपी करें — कुछ स्कैन के लिए, बिना साइन-अप।"
+
+msgid "<strong>With a NextGuard account:</strong> paste your key from <a href=\"%s/account\" target=\"_blank\">Account → API Keys</a> to link this site to a project for continuous monitoring."
+msgstr "<strong>NextGuard खाते के साथ:</strong> <a href=\"%s/account\" target=\"_blank\">खाता → API Keys</a> से अपनी key पेस्ट करें ताकि यह साइट निरंतर निगरानी के लिए एक प्रोजेक्ट से जुड़े।"
+
+msgid "Have a paid NextGuard account? You can connect it with your API key using the device-authorization flow below — that links this site to a project for ongoing monitoring."
+msgstr "पेड NextGuard खाता है? नीचे device-auth फ्लो से अपनी API key द्वारा कनेक्ट करें — यह साइट को निरंतर निगरानी के प्रोजेक्ट से जोड़ता है।"
+
+msgid "Automatically syncs your installed plugins and themes to <a href=\"%s\" target=\"_blank\">NextGuard</a> for continuous CVE monitoring."
+msgstr "आपके इंस्टॉल किए प्लगइन और थीम को निरंतर CVE निगरानी के लिए <a href=\"%s\" target=\"_blank\">NextGuard</a> से अपने आप सिंक करता है।"
+
+msgid "<strong>NextGuard:</strong> Your site is using a legacy API key configuration. Please reconnect below using the new Device Authorization Flow."
+msgstr "<strong>NextGuard:</strong> आपकी साइट पुरानी API key कॉन्फ़िगरेशन उपयोग कर रही है। नीचे नए Device Authorization Flow से फिर कनेक्ट करें।"
+
+msgid "Go to <a href=\"%s/account\" target=\"_blank\">nextguardhq.com/account → Connected Devices</a> and enter this code:"
+msgstr "<a href=\"%s/account\" target=\"_blank\">nextguardhq.com/account → Connected Devices</a> पर जाएं और यह कोड डालें:"
+
+msgid "I've authorized it — Continue"
+msgstr "मैंने अधिकृत कर दिया — जारी रखें"
+
+msgid "Project: <strong>%s</strong> <span style=\"color:#6b7280;font-size:12px\">(%s)</span>"
+msgstr "प्रोजेक्ट: <strong>%s</strong> <span style=\"color:#6b7280;font-size:12px\">(%s)</span>"
+
+msgid "Last sync: <strong>%s</strong>"
+msgstr "अंतिम सिंक: <strong>%s</strong>"
+
+msgid "Please enter your API key."
+msgstr "अपनी API key दर्ज करें।"
+
+msgid "API key is required."
+msgstr "API key आवश्यक है।"
+
+msgid "Invalid API key. Keys must start with vs_pk_"
+msgstr "अमान्य API key। vs_pk_ से शुरू होनी चाहिए"
+
+msgid "Failed to get activation code from NextGuard. Check your API key."
+msgstr "NextGuard से सक्रियण कोड नहीं मिला। अपनी API key जांचें।"
+
+msgid "Request failed."
+msgstr "अनुरोध विफल।"
+
+msgid "Network error. Please try again."
+msgstr "नेटवर्क त्रुटि। फिर से कोशिश करें।"
+
+msgid "Error checking status."
+msgstr "स्थिति जांचने में त्रुटि।"
+
+msgid "Code expired. Please go back and request a new one."
+msgstr "कोड समाप्त हो गया। वापस जाकर नया मांगें।"
+
+msgid "No pending activation. Please request a new code."
+msgstr "कोई सक्रियण लंबित नहीं। नया कोड मांगें।"
+
+msgid "Unauthorized"
+msgstr "अनधिकृत"
+
+msgid "Last scan: %s"
+msgstr "अंतिम स्कैन: %s"
+
+msgid "Why connect a NextGuard account?"
+msgstr "NextGuard खाता क्यों कनेक्ट करें?"
+
+msgid "This free scan only shows a teaser and the key expires in 2 hours. With an account this site becomes a monitored project: the full report, automatic re-scans, and email alerts whenever a new CVE hits your plugins or themes."
+msgstr "यह मुफ़्त स्कैन केवल झलक दिखाता है और key 2 घंटे में समाप्त हो जाती है। खाते के साथ यह साइट एक निगरानी प्रोजेक्ट बन जाती है: पूरी रिपोर्ट, स्वचालित री-स्कैन, और जब भी कोई नया CVE आपके प्लगइन या थीम पर असर करे तो ईमेल अलर्ट।"
+
+msgid "Already have an account? Paste your Account key (vs_pk_…) from Account → API Keys above to link this site to an existing project."
+msgstr "पहले से खाता है? इस साइट को मौजूदा प्रोजेक्ट से जोड़ने के लिए ऊपर खाता → API Keys से अपनी खाता key (vs_pk_…) पेस्ट करें।"
+
+msgid "Create free account"
+msgstr "मुफ़्त खाता बनाएं"
+
+msgid "Full vulnerability report (no blur)"
+msgstr "पूरी कमज़ोरी रिपोर्ट (बिना धुंधलापन)"
+
+msgid "1 monitored project"
+msgstr "1 निगरानी प्रोजेक्ट"
+
+msgid "CVE database access"
+msgstr "CVE डेटाबेस एक्सेस"
+
+msgid "Get Monitoring"
+msgstr "Monitoring लें"
+
+msgid "Continuous automatic re-scans"
+msgstr "निरंतर स्वचालित री-स्कैन"
+
+msgid "Email alerts on new CVEs"
+msgstr "नए CVE पर ईमेल अलर्ट"
+
+msgid "Unlimited scans, no expiry"
+msgstr "असीमित स्कैन, कोई समाप्ति नहीं"
+
+msgid "Get Starter"
+msgstr "Starter लें"
+
+msgid "Everything in Monitoring"
+msgstr "Monitoring का सब कुछ"
+
+msgid "Multiple projects & environments"
+msgstr "कई प्रोजेक्ट और एनवायरनमेंट"
+
+msgid "Scan history & auto-patching"
+msgstr "स्कैन इतिहास और ऑटो-पैचिंग"

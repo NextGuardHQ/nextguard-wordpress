@@ -3,7 +3,7 @@
  * Plugin Name: NextGuard Security Scanner
  * Plugin URI:  https://nextguardhq.com
  * Description: Syncs your installed plugins and themes to NextGuard for continuous CVE monitoring.
- * Version:     1.1.0
+ * Version:     1.2.0
  * Author:      NextGuard
  * Author URI:  https://nextguardhq.com
  * License:     GPLv2 or later
@@ -12,10 +12,18 @@
 
 defined('ABSPATH') || exit;
 
-define('NEXTGUARD_VERSION',          '1.1.0');
-define('NEXTGUARD_ACTIVATE_URL',     'https://nextguardhq.com/api/v1/auth/activate');
-define('NEXTGUARD_STATUS_URL',       'https://nextguardhq.com/api/v1/auth/activate');
-define('NEXTGUARD_API_URL',          'https://nextguardhq.com/api/v1/cms/sync');
+define('NEXTGUARD_VERSION',          '1.2.0');
+// API base — defaults to production. To point at a local/staging dashboard for
+// testing, define NEXTGUARD_API_BASE in wp-config.php BEFORE WordPress loads
+// plugins, e.g. define('NEXTGUARD_API_BASE', 'https://your-tunnel.ngrok.io');
+// The override lives only in the site's wp-config — this file always ships the
+// production default, so the published plugin is always pointed at production.
+if (!defined('NEXTGUARD_API_BASE')) {
+    define('NEXTGUARD_API_BASE', 'https://nextguardhq.com');
+}
+define('NEXTGUARD_ACTIVATE_URL',     NEXTGUARD_API_BASE . '/api/v1/auth/activate');
+define('NEXTGUARD_STATUS_URL',       NEXTGUARD_API_BASE . '/api/v1/auth/activate');
+define('NEXTGUARD_API_URL',          NEXTGUARD_API_BASE . '/api/v1/cms/sync');
 define('NEXTGUARD_OPTION_API_KEY',   'nextguard_api_key');
 define('NEXTGUARD_OPTION_TOKEN',     'nextguard_token');       // device token (ng_dev_...)
 define('NEXTGUARD_OPTION_PROJECT_ID','nextguard_project_id');  // auto-filled after auth
@@ -25,6 +33,22 @@ define('NEXTGUARD_CRON_HOOK',        'nextguard_sync_cron');
 
 register_activation_hook(__FILE__, 'nextguard_activate');
 register_deactivation_hook(__FILE__, 'nextguard_deactivate');
+
+// Load translations (es, pt, fr, de, nl, ja, zh, hi) from /languages.
+add_action('plugins_loaded', function () {
+    load_plugin_textdomain('nextguard', false, dirname(plugin_basename(__FILE__)) . '/languages');
+});
+
+// "Scan / Settings" action link on the Plugins list so users find the page.
+add_filter('plugin_action_links_' . plugin_basename(__FILE__), 'nextguard_action_links');
+function nextguard_action_links($links) {
+    $url = admin_url('options-general.php?page=nextguard');
+    array_unshift(
+        $links,
+        '<a href="' . esc_url($url) . '" style="font-weight:600;color:#ef4444;">' . __('Scan now', 'nextguard') . '</a>'
+    );
+    return $links;
+}
 
 function nextguard_activate() {
     if (!wp_next_scheduled(NEXTGUARD_CRON_HOOK)) {
@@ -58,7 +82,10 @@ function nextguard_sync() {
     $auth_key   = nextguard_effective_key();
     $project_id = get_option(NEXTGUARD_OPTION_PROJECT_ID, '');
 
-    if (empty($auth_key) || empty($project_id)) return;
+    // Anonymous Live Scan keys (vs_pk_anon_) bind to an ephemeral project
+    // server-side, so no local project_id is required.
+    $is_anon = strpos($auth_key, 'vs_pk_anon_') === 0;
+    if (empty($auth_key) || (empty($project_id) && !$is_anon)) return;
 
     if (!function_exists('get_plugins')) {
         require_once ABSPATH . 'wp-admin/includes/plugin.php';
@@ -124,13 +151,87 @@ function nextguard_sync() {
             'X-NG-Signature'  => $signature,
         ],
         'body'     => $body,
-        'timeout'  => 15,
-        'blocking' => false,   // fire-and-forget
+        'timeout'  => 20,
+        // Anonymous keys: block to capture the teaser preview the server returns,
+        // so we can show vulnerabilities + a register CTA right here in the admin.
+        'blocking' => $is_anon,
     ]);
 
     if (!is_wp_error($response)) {
         update_option('nextguard_last_sync', current_time('mysql'));
+        if ($is_anon) {
+            $data = json_decode(wp_remote_retrieve_body($response), true);
+            if (is_array($data) && isset($data['preview'])) {
+                update_option('nextguard_last_preview', wp_json_encode($data['preview']));
+                update_option('nextguard_register_url', $data['registerUrl'] ?? 'https://nextguardhq.com/register');
+                update_option('nextguard_syncs_remaining', isset($data['syncsRemaining']) ? intval($data['syncsRemaining']) : null);
+                update_option('nextguard_max_syncs', isset($data['maxSyncs']) ? intval($data['maxSyncs']) : null);
+                // Scan date — prefer the server timestamp, fall back to local time.
+                update_option('nextguard_last_scan', !empty($data['scannedAt']) ? $data['scannedAt'] : current_time('mysql'));
+                // Plan upgrade links (origin-aware) for the "create account" panel.
+                if (!empty($data['plans']) && is_array($data['plans'])) {
+                    update_option('nextguard_plan_links', wp_json_encode($data['plans']));
+                }
+            }
+        }
     }
+}
+
+// ── Plans: load live from the dashboard (cached), with a static fallback ─────
+// Keeps prices/benefits in sync with the website — no hardcoded pricing here.
+
+function nextguard_fetch_plans($ng_base, $plan_links = array()) {
+    $locale    = function_exists('get_locale') ? get_locale() : 'en_US';
+    $cache_key = 'nextguard_plans_' . substr(md5($ng_base . '|' . $locale), 0, 12);
+    $cached    = get_transient($cache_key);
+    if (is_array($cached) && !empty($cached)) {
+        return $cached;
+    }
+
+    $url  = rtrim($ng_base, '/') . '/api/public/plans?keys=free,monitoring,starter&locale=' . rawurlencode($locale);
+    $resp = wp_remote_get($url, array('timeout' => 8, 'headers' => array('ngrok-skip-browser-warning' => '1')));
+    if (!is_wp_error($resp) && wp_remote_retrieve_response_code($resp) === 200) {
+        $data = json_decode(wp_remote_retrieve_body($resp), true);
+        if (is_array($data) && !empty($data['plans']) && is_array($data['plans'])) {
+            set_transient($cache_key, $data['plans'], HOUR_IN_SECONDS);
+            return $data['plans'];
+        }
+    }
+
+    // Fallback (endpoint unreachable) — static set, still localized by the plugin.
+    $pl = function ($k, $def) use ($plan_links) { return isset($plan_links[$k]) ? $plan_links[$k] : $def; };
+    return array(
+        array(
+            'key' => 'free', 'name' => __('Free', 'nextguard'), 'priceDisplay' => '$0', 'period' => '',
+            'href' => $pl('free', rtrim($ng_base, '/') . '/register'),
+            'cta' => __('Create free account', 'nextguard'), 'highlighted' => false,
+            'features' => array(
+                __('Full vulnerability report (no blur)', 'nextguard'),
+                __('1 monitored project', 'nextguard'),
+                __('CVE database access', 'nextguard'),
+            ),
+        ),
+        array(
+            'key' => 'monitoring', 'name' => __('Monitoring', 'nextguard'), 'priceDisplay' => '$3', 'period' => '/mo',
+            'href' => $pl('monitoring', rtrim($ng_base, '/') . '/checkout/monitoring'),
+            'cta' => __('Get Monitoring', 'nextguard'), 'highlighted' => true,
+            'features' => array(
+                __('Continuous automatic re-scans', 'nextguard'),
+                __('Email alerts on new CVEs', 'nextguard'),
+                __('Unlimited scans, no expiry', 'nextguard'),
+            ),
+        ),
+        array(
+            'key' => 'starter', 'name' => __('Starter', 'nextguard'), 'priceDisplay' => '$7', 'period' => '/mo',
+            'href' => $pl('starter', rtrim($ng_base, '/') . '/checkout/starter'),
+            'cta' => __('Get Starter', 'nextguard'), 'highlighted' => false,
+            'features' => array(
+                __('Everything in Monitoring', 'nextguard'),
+                __('Multiple projects & environments', 'nextguard'),
+                __('Scan history & auto-patching', 'nextguard'),
+            ),
+        ),
+    );
 }
 
 // ── AJAX: Request activation code ────────────────────────────────────────────
@@ -151,6 +252,18 @@ function nextguard_ajax_request_code() {
 
     // Persist the API key so we can sign future requests
     update_option(NEXTGUARD_OPTION_API_KEY, $api_key);
+
+    // Anonymous Live Scan keys (vs_pk_anon_) skip the device-authorization flow:
+    // there is no account to approve a code in. We sync immediately — the server
+    // binds the data to the ephemeral project behind the key — and the home widget
+    // picks up the result by polling.
+    if (strpos($api_key, 'vs_pk_anon_') === 0) {
+        nextguard_sync();
+        wp_send_json_success([
+            'anon'    => true,
+            'message' => __('Connected. Syncing your site… check the scan on the page where you got this key.', 'nextguard'),
+        ]);
+    }
 
     $response = wp_remote_post(NEXTGUARD_ACTIVATE_URL, [
         'headers' => [
@@ -260,6 +373,9 @@ function nextguard_settings_page() {
     $project_id   = get_option(NEXTGUARD_OPTION_PROJECT_ID, '');
     $project_name = get_option('nextguard_project_name', '');
     $api_key      = get_option(NEXTGUARD_OPTION_API_KEY, '');
+    $is_anon      = !empty($api_key) && strpos($api_key, 'vs_pk_anon_') === 0;
+    // Links point at the configured base (the tunnel locally, production when published).
+    $ng_base      = defined('NEXTGUARD_API_BASE') ? rtrim(NEXTGUARD_API_BASE, '/') : 'https://nextguardhq.com';
     $is_connected = !empty($token) && !empty($project_id);
     $nonce        = wp_create_nonce('nextguard_ajax');
 
@@ -268,7 +384,19 @@ function nextguard_settings_page() {
     ?>
     <div class="wrap">
         <h1><span style="color:#ef4444">&#9632;</span> NextGuard Security Scanner</h1>
-        <p><?php _e('Automatically syncs your installed plugins and themes to <a href="https://nextguardhq.com" target="_blank">NextGuard</a> for continuous CVE monitoring.', 'nextguard'); ?></p>
+        <p><?php printf(__('Automatically syncs your installed plugins and themes to <a href="%s" target="_blank">NextGuard</a> for continuous CVE monitoring.', 'nextguard'), esc_url($ng_base)); ?></p>
+
+        <?php if ($is_anon): ?>
+        <div style="background:#eff6ff;border:1px solid #bfdbfe;padding:16px 20px;border-radius:6px;margin:20px 0;max-width:760px;">
+            <p style="margin:0 0 6px;font-weight:700;color:#1d4ed8;">&#128270; <?php _e('Free scan active — no account needed', 'nextguard'); ?></p>
+            <p style="margin:0;color:#374151;font-size:14px;line-height:1.6;">
+                <?php _e('You are running a <strong>free, anonymous scan</strong>. Below you can see the vulnerabilities detected on your site right now. <strong>Register a free NextGuard account</strong> to unlock the full list and get continuous monitoring with email alerts.', 'nextguard'); ?>
+            </p>
+            <p style="margin:8px 0 0;color:#6b7280;font-size:12px;">
+                <?php _e('Have a paid NextGuard account? You can connect it with your API key using the device-authorization flow below — that links this site to a project for ongoing monitoring.', 'nextguard'); ?>
+            </p>
+        </div>
+        <?php endif; ?>
 
         <?php if ($show_reconnect): ?>
         <div class="notice notice-warning">
@@ -293,7 +421,12 @@ function nextguard_settings_page() {
 
             <!-- ── Step 1: Enter API key + request code ── -->
             <div id="nextguard-step-1">
-                <h2><?php _e('Connect to NextGuard', 'nextguard'); ?></h2>
+                <h2><?php _e('Connect & scan', 'nextguard'); ?></h2>
+                <p style="max-width:780px;color:#374151;"><?php _e('Paste an API key to scan this site. <strong>No paid plan required.</strong>', 'nextguard'); ?></p>
+                <ul style="max-width:780px;color:#374151;list-style:disc;margin:6px 0 4px 22px;">
+                    <li><?php printf(__('<strong>Free, no account:</strong> open <a href="%s/#scan" target="_blank">nextguardhq.com → Free scan</a>, run the free CMS scan and copy the key it gives you — it works for a few scans, no sign-up.', 'nextguard'), esc_url($ng_base)); ?></li>
+                    <li><?php printf(__('<strong>With a NextGuard account:</strong> paste your key from <a href="%s/account" target="_blank">Account → API Keys</a> to link this site to a project for continuous monitoring.', 'nextguard'), esc_url($ng_base)); ?></li>
+                </ul>
                 <table class="form-table">
                     <tr>
                         <th scope="row"><label for="nextguard_api_key_input"><?php _e('API Key', 'nextguard'); ?></label></th>
@@ -301,18 +434,18 @@ function nextguard_settings_page() {
                             <input type="password" id="nextguard_api_key_input"
                                    value="<?php echo esc_attr($api_key); ?>"
                                    class="regular-text" placeholder="vs_pk_..." />
-                            <p class="description"><?php _e('Find this in <a href="https://nextguardhq.com/account" target="_blank">Account → API Keys</a>. Requires Starter plan or higher.', 'nextguard'); ?></p>
+                            <p class="description"><?php _e('Free keys start with <code>vs_pk_anon_</code> (temporary). Account keys start with <code>vs_pk_</code>.', 'nextguard'); ?></p>
                         </td>
                     </tr>
                 </table>
-                <button type="button" id="nextguard-get-code" class="button button-primary"><?php _e('Connect', 'nextguard'); ?></button>
+                <button type="button" id="nextguard-get-code" class="button button-primary"><?php _e('Connect &amp; scan', 'nextguard'); ?></button>
                 <span id="nextguard-step1-spinner" style="display:none;margin-left:8px;" class="spinner is-active"></span>
                 <p id="nextguard-step1-error" style="color:#dc2626;display:none;"></p>
             </div>
 
             <!-- ── Step 2: Show code + poll ── -->
             <div id="nextguard-step-2" style="display:none;background:#fffbeb;border:1px solid #fcd34d;padding:16px 20px;border-radius:6px;margin:16px 0;">
-                <p style="margin:0 0 8px;"><?php _e('Go to <a href="https://nextguardhq.com/account" target="_blank">nextguardhq.com/account → Connected Devices</a> and enter this code:', 'nextguard'); ?></p>
+                <p style="margin:0 0 8px;"><?php printf(__('Go to <a href="%s/account" target="_blank">nextguardhq.com/account → Connected Devices</a> and enter this code:', 'nextguard'), esc_url($ng_base)); ?></p>
                 <p style="font-size:28px;font-weight:700;letter-spacing:4px;color:#1e293b;margin:12px 0;" id="nextguard-code-display"></p>
                 <p style="color:#6b7280;font-size:12px;margin:0 0 12px;" id="nextguard-code-expiry"></p>
                 <button type="button" id="nextguard-poll-btn" class="button button-primary"><?php _e("I've authorized it — Continue", 'nextguard'); ?></button>
@@ -321,6 +454,107 @@ function nextguard_settings_page() {
             </div>
 
         </div><!-- #nextguard-connect-form -->
+
+        <?php
+        // ── Vulnerability preview (teaser) — same results shown on the dashboard ──
+        $preview_raw  = get_option('nextguard_last_preview', '');
+        $preview      = $preview_raw ? json_decode($preview_raw, true) : null;
+        $register_url = get_option('nextguard_register_url', 'https://nextguardhq.com/register');
+        $syncs_left   = get_option('nextguard_syncs_remaining', null);
+        $scan_date    = get_option('nextguard_last_scan', $last_sync);
+        $plan_links_raw = get_option('nextguard_plan_links', '');
+        $plan_links   = $plan_links_raw ? json_decode($plan_links_raw, true) : array();
+        if (!is_array($plan_links)) $plan_links = array();
+        // Plans are loaded LIVE from the dashboard so prices/benefits stay in sync.
+        // Falls back to a static set if the endpoint is unreachable.
+        $ng_plans = nextguard_fetch_plans($ng_base, $plan_links);
+        if (is_array($preview) && !empty($preview['available']) && !empty($preview['summary']) && intval($preview['summary']['total']) > 0):
+            $s = $preview['summary'];
+        ?>
+        <hr />
+        <h2><?php _e('Vulnerabilities detected on your site', 'nextguard'); ?></h2>
+        <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;max-width:1320px;">
+          <div style="flex:1 1 560px;min-width:320px;">
+            <p style="font-size:20px;font-weight:700;color:#dc2626;margin:0 0 4px;"><?php printf(__('%d vulnerabilities found', 'nextguard'), intval($s['total'])); ?></p>
+            <?php if ($scan_date): ?>
+            <p style="margin:0 0 10px;color:#6b7280;font-size:12px;">&#128337; <?php printf(__('Last scan: %s', 'nextguard'), esc_html($scan_date)); ?></p>
+            <?php endif; ?>
+            <p style="margin:0 0 12px;font-family:monospace;font-size:13px;">
+                <span style="color:#dc2626;"><?php echo intval($s['critical']); ?> CRITICAL</span> &middot;
+                <span style="color:#ea580c;"><?php echo intval($s['high']); ?> HIGH</span> &middot;
+                <span style="color:#ca8a04;"><?php echo intval($s['medium']); ?> MEDIUM</span> &middot;
+                <span style="color:#65a30d;"><?php echo intval($s['low'] ?? 0); ?> LOW</span>
+            </p>
+            <table class="widefat striped" style="max-width:920px;">
+                <thead><tr>
+                    <th style="width:90px;"><?php _e('Severity', 'nextguard'); ?></th>
+                    <th><?php _e('Component', 'nextguard'); ?></th>
+                    <th style="width:110px;"><?php _e('Installed', 'nextguard'); ?></th>
+                    <th><?php _e('Vulnerability', 'nextguard'); ?></th>
+                    <th style="width:100px;"><?php _e('Fixed in', 'nextguard'); ?></th>
+                </tr></thead>
+                <tbody>
+                <?php foreach (($preview['shown'] ?? []) as $v):
+                    $sev = strtoupper($v['severity'] ?? '—');
+                    $sevColor = $sev === 'CRITICAL' ? '#dc2626' : ($sev === 'HIGH' ? '#ea580c' : ($sev === 'MEDIUM' ? '#ca8a04' : '#65a30d'));
+                ?>
+                    <tr>
+                        <td><span style="font-weight:700;font-size:11px;color:<?php echo $sevColor; ?>;"><?php echo esc_html($sev); ?></span></td>
+                        <td><strong><?php echo esc_html($v['componentName'] ?? $v['component'] ?? '—'); ?></strong></td>
+                        <td><code><?php echo esc_html($v['installedVersion'] ?? '—'); ?></code></td>
+                        <td><?php echo esc_html($v['title'] ?? ($v['cveId'] ?? '—')); ?></td>
+                        <td><?php echo esc_html($v['fixedIn'] ?? '—'); ?></td>
+                    </tr>
+                <?php endforeach; ?>
+                <?php if (!empty($preview['hidden']) && intval($preview['hidden']) > 0): for ($i = 0; $i < min(3, intval($preview['hidden'])); $i++): ?>
+                    <tr style="filter:blur(3px);user-select:none;">
+                        <td><span style="font-weight:700;font-size:11px;color:#dc2626;">HIGH</span></td>
+                        <td>&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;</td>
+                        <td>&#9608;.&#9608;.&#9608;</td>
+                        <td>&#9608;&#9608;&#9608;&#9608; &#9608;&#9608;&#9608; &#9608;&#9608;&#9608;&#9608;&#9608;&#9608; &#9608;&#9608;&#9608;&#9608;</td>
+                        <td>&#9608;.&#9608;.&#9608;</td>
+                    </tr>
+                <?php endfor; endif; ?>
+                </tbody>
+            </table>
+            <?php if (!empty($preview['hidden']) && intval($preview['hidden']) > 0): ?>
+                <p style="font-weight:600;color:#b45309;margin:12px 0 0;"><?php printf(__('+%d more vulnerabilities hidden — register free to see the full report.', 'nextguard'), intval($preview['hidden'])); ?></p>
+            <?php endif; ?>
+            <p style="margin:14px 0 0;">
+                <a href="<?php echo esc_url($register_url); ?>" target="_blank" class="button button-primary button-hero"><?php _e('Register free for the full report + continuous monitoring', 'nextguard'); ?></a>
+            </p>
+            <?php if ($syncs_left !== null && $syncs_left !== ''): ?>
+                <p style="margin:10px 0 0;color:#6b7280;font-size:12px;">&#9432; <?php printf(__('This free key has %d scan(s) left and expires in 2 hours. When it runs out, generate a new free key on the home page or register for unlimited continuous monitoring.', 'nextguard'), intval($syncs_left)); ?></p>
+            <?php endif; ?>
+          </div><!-- /left column -->
+
+          <!-- ── Right column: why create an account + plans (mirrors home pricing) ── -->
+          <div style="flex:0 0 340px;min-width:300px;background:#0f172a;border-radius:8px;padding:20px 18px;color:#e2e8f0;box-shadow:0 1px 3px rgba(0,0,0,.2);">
+            <h3 style="margin:0 0 6px;color:#fff;font-size:16px;"><?php _e('Why connect a NextGuard account?', 'nextguard'); ?></h3>
+            <p style="margin:0 0 16px;color:#94a3b8;font-size:12.5px;line-height:1.6;"><?php _e('This free scan only shows a teaser and the key expires in 2 hours. With an account this site becomes a monitored project: the full report, automatic re-scans, and email alerts whenever a new CVE hits your plugins or themes.', 'nextguard'); ?></p>
+            <?php foreach ($ng_plans as $p): $hot = !empty($p['highlighted']) || (isset($p['key']) && $p['key'] === 'monitoring'); ?>
+            <div style="border:1px solid <?php echo $hot ? '#0ea5e9' : '#1e293b'; ?>;border-radius:6px;padding:12px 14px;margin:0 0 10px;background:#111827;">
+              <div style="display:flex;justify-content:space-between;align-items:baseline;margin:0 0 8px;">
+                <strong style="font-size:14px;color:#fff;"><?php echo esc_html($p['name']); ?></strong>
+                <span style="font-size:13px;color:#38bdf8;font-weight:700;"><?php echo esc_html((isset($p['priceDisplay']) ? $p['priceDisplay'] : (isset($p['price']) ? $p['price'] : '')) . (isset($p['period']) ? $p['period'] : '')); ?></span>
+              </div>
+              <ul style="list-style:none;margin:0 0 10px;padding:0;font-size:12px;color:#cbd5e1;line-height:1.5;">
+                <?php $ng_feats = isset($p['features']) ? $p['features'] : (isset($p['benefits']) ? $p['benefits'] : array()); foreach ($ng_feats as $b): ?>
+                <li style="margin:0 0 4px;"><span style="color:#22c55e;">&#10003;</span> <?php echo esc_html($b); ?></li>
+                <?php endforeach; ?>
+              </ul>
+              <a href="<?php echo esc_url($p['href']); ?>" target="_blank" class="button <?php echo $hot ? 'button-primary' : ''; ?>" style="display:block;width:100%;text-align:center;box-sizing:border-box;"><?php echo esc_html($p['cta']); ?></a>
+            </div>
+            <?php endforeach; ?>
+            <p style="margin:12px 0 0;color:#64748b;font-size:11px;line-height:1.5;"><?php _e('Already have an account? Paste your Account key (vs_pk_…) from Account → API Keys above to link this site to an existing project.', 'nextguard'); ?></p>
+          </div><!-- /right column -->
+        </div><!-- /flex -->
+        <?php elseif (is_array($preview) && !empty($preview['available'])): ?>
+        <hr />
+        <div style="background:#f0fdf4;border:1px solid #86efac;padding:16px 20px;border-radius:6px;margin:12px 0;max-width:760px;">
+            <p style="color:#16a34a;font-weight:600;margin:0;">&#10003; <?php _e('No known vulnerabilities found on your site.', 'nextguard'); ?></p>
+        </div>
+        <?php endif; ?>
 
         <hr />
         <h2><?php _e('Manual Sync', 'nextguard'); ?></h2>
@@ -338,6 +572,8 @@ function nextguard_settings_page() {
         <?php
         if ($is_connected) {
             echo '<p style="color:green">&#10003; ' . __('Connected via device token. Sync runs daily automatically.', 'nextguard') . '</p>';
+        } elseif ($is_anon) {
+            echo '<p style="color:#2563eb">&#128270; ' . __('Free scan active (no account). Register at NextGuard for continuous monitoring + alerts.', 'nextguard') . '</p>';
         } elseif ($api_key && $project_id) {
             echo '<p style="color:orange">&#9888; ' . __('Legacy configuration — reconnect using the Device Auth Flow above.', 'nextguard') . '</p>';
         } else {
@@ -378,6 +614,13 @@ function nextguard_settings_page() {
 
                 if (!resp.success) {
                     $('#nextguard-step1-error').text(resp.data.message || '<?php echo esc_js(__('Request failed.', 'nextguard')); ?>').show();
+                    return;
+                }
+
+                // Anonymous / free-account key: no device code — already synced.
+                // Reload so the server-rendered vulnerability preview appears.
+                if (resp.data && resp.data.anon) {
+                    location.reload();
                     return;
                 }
 
