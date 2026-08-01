@@ -4,6 +4,21 @@ All notable changes to the NextGuard WordPress plugin are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the
 project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.3.0]
+
+### Added
+- Internal security audit is now sent alongside the plugin/theme inventory on each
+  sync (previously the sync carried inventory only). Checks cover configuration
+  (`WP_DEBUG`, file-editor / RCE surface, open registration, XML-RPC, admin HTTPS),
+  outdated core/plugins/themes, risky users (default `admin` login, author
+  enumeration) and `wp-config.php` permissions.
+
+### Security
+- Findings never carry raw usernames or file contents — account names are masked.
+
+### Notes
+- Additive and fail-safe: if the audit errors, the inventory sync still succeeds.
+
 ## [1.2.0]
 
 ### Added

@@ -3,7 +3,7 @@
  * Plugin Name: NextGuard Security Scanner
  * Plugin URI:  https://nextguardhq.com
  * Description: Syncs your installed plugins and themes to NextGuard for continuous CVE monitoring.
- * Version:     1.2.0
+ * Version:     1.3.0
  * Author:      NextGuard
  * Author URI:  https://nextguardhq.com
  * License:     GPLv2 or later
@@ -12,7 +12,7 @@
 
 defined('ABSPATH') || exit;
 
-define('NEXTGUARD_VERSION',          '1.2.0');
+define('NEXTGUARD_VERSION',          '1.3.0');
 // API base — defaults to production. To point at a local/staging dashboard for
 // testing, define NEXTGUARD_API_BASE in wp-config.php BEFORE WordPress loads
 // plugins, e.g. define('NEXTGUARD_API_BASE', 'https://your-tunnel.ngrok.io');
@@ -78,6 +78,185 @@ function nextguard_effective_key(): string {
     return get_option(NEXTGUARD_OPTION_API_KEY, '');
 }
 
+/**
+ * Enmascara un valor sensible para el reporte: deja los 2 primeros y tapa el
+ * resto. El nombre completo de un usuario no tiene por qué salir del sitio.
+ */
+function nextguard_mask(string $v): string {
+    $v = trim($v);
+    if ($v === '') return '';
+    if (strlen($v) <= 2) return $v[0] . '*';
+    return substr($v, 0, 2) . str_repeat('*', min(6, strlen($v) - 2));
+}
+
+/**
+ * Auditoría interna del sitio WordPress — lo que un escaneo de superficie no ve.
+ *
+ * Equivalente al `SecurityAudit` del módulo Drupal, adaptado a WordPress. Cada
+ * hallazgo lleva un `id` ESTABLE: es la clave por la que el servidor deduplica
+ * entre syncs, así que un mismo problema no se apila. Nunca sale contenido
+ * sensible (contraseñas, claves, contenido de wp-config): sólo el hecho y, como
+ * mucho, un nombre enmascarado.
+ *
+ * @param array<string,array> $all_plugins
+ * @param array<int,string>   $active_slugs
+ * @param WP_Theme            $theme
+ * @return array{findings:array<int,array>,meta:array}
+ */
+function nextguard_collect_audit(array $all_plugins, array $active_slugs, $theme): array {
+    $f = [];
+    $add = static function (string $id, string $sev, string $title, string $detail, string $rem = '', array $ctx = []) use (&$f) {
+        $f[] = array_filter([
+            'id' => $id, 'severity' => $sev, 'title' => $title,
+            'detail' => $detail, 'remediation' => $rem, 'context' => $ctx,
+        ], static fn ($v) => $v !== '' && $v !== []);
+    };
+
+    // ── Configuración ────────────────────────────────────────────────────────
+    if (defined('WP_DEBUG') && WP_DEBUG) {
+        $display = defined('WP_DEBUG_DISPLAY') ? WP_DEBUG_DISPLAY : true;
+        $add('wp:debug-on', $display ? 'MEDIUM' : 'LOW',
+            'WP_DEBUG está activo' . ($display ? ' y muestra errores en pantalla' : ''),
+            'El modo debug filtra rutas del servidor, versiones y trazas de error a cualquier visitante cuando se muestran en pantalla.',
+            'Poné WP_DEBUG en false en producción (wp-config.php). Si necesitás depurar, usá WP_DEBUG_LOG y WP_DEBUG_DISPLAY=false.');
+    }
+    // Editor de plugins/temas: si está habilitado, un admin comprometido tiene RCE directa.
+    if (!defined('DISALLOW_FILE_EDIT') || !DISALLOW_FILE_EDIT) {
+        $add('wp:file-edit-enabled', 'HIGH',
+            'El editor de archivos del panel está habilitado',
+            'Con el editor de plugins/temas activo, cualquiera que consiga acceso de administrador puede ejecutar código PHP en el servidor sin tocar el hosting.',
+            "Agregá define('DISALLOW_FILE_EDIT', true); a wp-config.php.");
+    }
+    if (!defined('DISALLOW_FILE_MODS') || !DISALLOW_FILE_MODS) {
+        $add('wp:file-mods-enabled', 'LOW',
+            'Instalación/actualización de plugins desde el panel habilitada',
+            'Permite instalar plugins y temas desde el panel — superficie extra si una cuenta admin se compromete.',
+            "Opcional y estricto: define('DISALLOW_FILE_MODS', true); bloquea toda modificación de archivos desde el panel.");
+    }
+    if (!defined('FORCE_SSL_ADMIN') || !FORCE_SSL_ADMIN) {
+        $add('wp:no-force-ssl-admin', 'LOW',
+            'El panel no fuerza HTTPS',
+            'Sin FORCE_SSL_ADMIN, las credenciales de administración pueden viajar sin cifrar si alguien llega por http://.',
+            "Agregá define('FORCE_SSL_ADMIN', true); a wp-config.php.");
+    }
+    // Registro abierto de usuarios + rol por defecto.
+    if ((int) get_option('users_can_register') === 1) {
+        $role = (string) get_option('default_role', 'subscriber');
+        $risky = in_array($role, ['administrator', 'editor', 'author'], true);
+        $add('wp:open-registration', $risky ? 'HIGH' : 'LOW',
+            "Registro de usuarios abierto (rol por defecto: {$role})",
+            $risky
+                ? "Cualquiera puede registrarse y obtiene el rol «{$role}», que puede publicar o administrar contenido."
+                : 'Cualquiera puede crear una cuenta. Con rol subscriber el riesgo es bajo, pero suma superficie de spam/enumeración.',
+            $risky ? 'Cambiá el rol por defecto a subscriber, o cerrá el registro si no lo necesitás.' : 'Revisá si el registro abierto es necesario.');
+    }
+    // XML-RPC: vector clásico de fuerza bruta amplificada y pingback DDoS.
+    if (function_exists('apply_filters') && apply_filters('xmlrpc_enabled', true)) {
+        $add('wp:xmlrpc-enabled', 'LOW',
+            'XML-RPC está habilitado',
+            'xmlrpc.php permite amplificar intentos de login (system.multicall) y usar el sitio para pingback DDoS.',
+            'Si no usás la app móvil de WordPress ni Jetpack, deshabilitá XML-RPC (filtro xmlrpc_enabled o a nivel servidor).');
+    }
+
+    // ── Versiones / superficie ───────────────────────────────────────────────
+    if (!function_exists('get_core_updates')) {
+        require_once ABSPATH . 'wp-admin/includes/update.php';
+    }
+    $core = function_exists('get_core_updates') ? get_core_updates() : [];
+    if (is_array($core) && !empty($core) && isset($core[0]->response) && $core[0]->response === 'upgrade') {
+        $add('wp:core-outdated', 'HIGH',
+            'El núcleo de WordPress está desactualizado',
+            'Hay una versión más nueva de WordPress disponible. Las versiones viejas acumulan CVEs conocidos con exploits públicos.',
+            'Actualizá el núcleo desde Escritorio → Actualizaciones.',
+            ['installed' => get_bloginfo('version')]);
+    }
+    $plugin_updates = function_exists('get_plugin_updates') ? get_plugin_updates() : [];
+    if (is_array($plugin_updates) && count($plugin_updates) > 0) {
+        $add('wp:plugins-outdated', count($plugin_updates) >= 3 ? 'HIGH' : 'MEDIUM',
+            count($plugin_updates) . ' plugin(s) con actualización pendiente',
+            'Los plugins son la vía de entrada más común a un WordPress. Cada plugin desactualizado puede tener un CVE con exploit público.',
+            'Actualizá los plugins desde Escritorio → Actualizaciones.',
+            ['count' => count($plugin_updates)]);
+    }
+    $theme_updates = function_exists('get_theme_updates') ? get_theme_updates() : [];
+    if (is_array($theme_updates) && count($theme_updates) > 0) {
+        $add('wp:themes-outdated', 'LOW',
+            count($theme_updates) . ' tema(s) con actualización pendiente',
+            'Un tema desactualizado —incluso inactivo— puede tener vulnerabilidades explotables.',
+            'Actualizá los temas, y borrá los que no uses.',
+            ['count' => count($theme_updates)]);
+    }
+    // Plugins inactivos: código que sigue en disco y a veces es alcanzable.
+    $inactive = 0;
+    foreach ($all_plugins as $path => $_d) {
+        if (!in_array($path, $active_slugs, true)) $inactive++;
+    }
+    if ($inactive > 0) {
+        $add('wp:inactive-plugins', 'INFO',
+            "{$inactive} plugin(s) instalado(s) pero inactivo(s)",
+            'Un plugin inactivo sigue en el servidor: su código puede ser alcanzable directamente por URL y no recibe la misma atención de actualización.',
+            'Borrá los plugins que no uses (no alcanza con desactivarlos).',
+            ['count' => $inactive]);
+    }
+
+    // ── Usuarios ─────────────────────────────────────────────────────────────
+    if (function_exists('get_users')) {
+        // Usuario con login "admin": el objetivo por defecto de todo ataque de fuerza bruta.
+        $admin_user = get_users(['login' => 'admin', 'number' => 1, 'fields' => ['ID']]);
+        if (!empty($admin_user)) {
+            $add('wp:admin-username', 'MEDIUM',
+                'Existe un usuario con el nombre «admin»',
+                'El login «admin» es el primero que prueba cualquier ataque de fuerza bruta — le regala la mitad del trabajo.',
+                'Creá un administrador nuevo con otro nombre y eliminá el usuario «admin» (reasignando su contenido).');
+        }
+        // Cantidad de administradores.
+        $admins = get_users(['role' => 'administrator', 'fields' => ['ID', 'user_login']]);
+        $n_admins = is_array($admins) ? count($admins) : 0;
+        if ($n_admins > 3) {
+            $add('wp:many-admins', 'LOW',
+                "{$n_admins} cuentas con rol administrador",
+                'Cada administrador es una llave maestra del sitio. Cuantas más, mayor la superficie: basta comprometer una.',
+                'Revisá si todas necesitan rol administrador; bajá a editor las que no.',
+                ['count' => $n_admins]);
+        }
+        // Enumeración de autor: display_name == user_login facilita la fuerza bruta.
+        $exposed = [];
+        foreach ((array) $admins as $a) {
+            $u = get_userdata($a->ID);
+            if ($u && strcasecmp($u->display_name, $u->user_login) === 0) {
+                $exposed[] = nextguard_mask($u->user_login);
+            }
+        }
+        if (!empty($exposed)) {
+            $add('wp:author-enumeration', 'LOW',
+                count($exposed) . ' admin(s) con nombre visible igual al login',
+                'Cuando el «nombre público» coincide con el usuario de login, la página de autor revela credenciales válidas para fuerza bruta.',
+                'Cambiá el «Mostrar este nombre públicamente» para que difiera del nombre de usuario.',
+                ['users' => $exposed]);
+        }
+    }
+
+    // ── Filesystem ───────────────────────────────────────────────────────────
+    $wp_config = ABSPATH . 'wp-config.php';
+    if (@file_exists($wp_config)) {
+        $perms = @fileperms($wp_config);
+        if ($perms !== false && ($perms & 0o044)) { // legible por grupo u otros
+            $add('wp:wp-config-perms', 'HIGH',
+                'wp-config.php es legible por otros usuarios del servidor',
+                'wp-config.php contiene las credenciales de la base de datos y las claves de seguridad. Si otros usuarios del servidor pueden leerlo, esas credenciales están expuestas.',
+                'Ajustá los permisos a 640 o 600 (chmod 600 wp-config.php).',
+                ['mode' => substr(sprintf('%o', $perms), -4)]);
+        }
+    }
+
+    return [
+        'findings' => $f,
+        'meta' => ['version' => NEXTGUARD_VERSION, 'ran' => [
+            'configuration', 'versions', 'users', 'filesystem',
+        ]],
+    ];
+}
+
 function nextguard_sync() {
     $auth_key   = nextguard_effective_key();
     $project_id = get_option(NEXTGUARD_OPTION_PROJECT_ID, '');
@@ -127,14 +306,28 @@ function nextguard_sync() {
         ];
     }
 
-    $body = wp_json_encode([
+    // Auditoría interna — ADITIVA. Si algo falla, se omite; nunca rompe el sync
+    // (mismo criterio que el módulo Drupal). Es lo que un escaneo de superficie
+    // NO puede ver desde afuera: config del sitio, usuarios, permisos.
+    $audit = null;
+    try {
+        $audit = nextguard_collect_audit($all_plugins, $active_slugs, $theme);
+    } catch (\Throwable $e) {
+        $audit = null; // aditivo: la ausencia de auditoría no invalida el inventario
+    }
+
+    $payload = [
         'projectId'  => $project_id,
         'cmsType'    => 'wordpress',
         'cmsVersion' => get_bloginfo('version'),
         'phpVersion' => PHP_VERSION,
         'siteUrl'    => home_url(),
         'components' => $components,
-    ]);
+    ];
+    if ($audit !== null) {
+        $payload['audit'] = $audit;
+    }
+    $body = wp_json_encode($payload);
 
     // HMAC-SHA256 request signing — sign with device token (or legacy api_key)
     $timestamp   = time();
