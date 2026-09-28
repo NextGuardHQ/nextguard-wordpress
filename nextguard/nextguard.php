@@ -3,7 +3,7 @@
  * Plugin Name: NextGuard Security Scanner
  * Plugin URI:  https://nextguardhq.com
  * Description: Syncs your installed plugins and themes to NextGuard for continuous CVE monitoring.
- * Version:     1.3.0
+ * Version:     2.0.0
  * Author:      NextGuard
  * Author URI:  https://nextguardhq.com
  * License:     GPLv2 or later
@@ -12,7 +12,7 @@
 
 defined('ABSPATH') || exit;
 
-define('NEXTGUARD_VERSION',          '1.3.0');
+define('NEXTGUARD_VERSION',          '2.0.0');
 // API base — defaults to production. To point at a local/staging dashboard for
 // testing, define NEXTGUARD_API_BASE in wp-config.php BEFORE WordPress loads
 // plugins, e.g. define('NEXTGUARD_API_BASE', 'https://your-tunnel.ngrok.io');
@@ -26,7 +26,8 @@ define('NEXTGUARD_STATUS_URL',       NEXTGUARD_API_BASE . '/api/v1/auth/activate
 define('NEXTGUARD_API_URL',          NEXTGUARD_API_BASE . '/api/v1/cms/sync');
 define('NEXTGUARD_OPTION_API_KEY',   'nextguard_api_key');
 define('NEXTGUARD_OPTION_TOKEN',     'nextguard_token');       // device token (ng_dev_...)
-define('NEXTGUARD_OPTION_PROJECT_ID','nextguard_project_id');  // auto-filled after auth
+define('NEXTGUARD_OPTION_PROJECT_ID','nextguard_project_id');
+define('NEXTGUARD_OPTION_ENV_TOKEN', 'nextguard_environment_token'); // opcional (vs_pe_*): ata el sync a un ambiente  // auto-filled after auth
 define('NEXTGUARD_CRON_HOOK',        'nextguard_sync_cron');
 
 // ── Activation / deactivation ────────────────────────────────────────────────
@@ -257,6 +258,50 @@ function nextguard_collect_audit(array $all_plugins, array $active_slugs, $theme
     ];
 }
 
+/**
+ * Integridad de un plugin de wordpress.org (spec 048): compara el md5 de cada
+ * archivo con los checksums oficiales de su versión — el mismo origen que usa
+ * `wp plugin verify-checksums`. Un plugin sin checksums publicados (premium,
+ * propio) es «unverifiable», nunca «verified». Resultado en caché 24 h.
+ *
+ * @return array{integrity:string, modifiedFiles:array<int,string>}|null  null = sin presupuesto
+ */
+function nextguard_plugin_integrity(string $slug, string $version) {
+    $unverifiable = ['integrity' => 'unverifiable', 'modifiedFiles' => []];
+    if ($slug === '' || $version === '' || !function_exists('wp_remote_get') || !defined('WP_PLUGIN_DIR')) return $unverifiable;
+    $cache_key = 'ng_ck_' . md5($slug . '@' . $version);
+    $cached = get_transient($cache_key);
+    if (is_array($cached)) return $cached;
+
+    $url  = 'https://downloads.wordpress.org/plugin-checksums/' . rawurlencode($slug) . '/' . rawurlencode($version) . '.json';
+    $resp = wp_remote_get($url, ['timeout' => 5]);
+    $day  = defined('DAY_IN_SECONDS') ? DAY_IN_SECONDS : 86400;
+    if (is_wp_error($resp) || (int) wp_remote_retrieve_response_code($resp) !== 200) {
+        set_transient($cache_key, $unverifiable, $day);
+        return $unverifiable;
+    }
+    $data = json_decode(wp_remote_retrieve_body($resp), true);
+    if (!is_array($data) || !isset($data['files']) || !is_array($data['files'])) {
+        set_transient($cache_key, $unverifiable, $day);
+        return $unverifiable;
+    }
+    $base     = rtrim(WP_PLUGIN_DIR, '/') . '/' . $slug;
+    $modified = [];
+    foreach ($data['files'] as $file => $sums) {
+        if (!is_string($file) || strpos($file, '..') !== false) continue;
+        $path = $base . '/' . $file;
+        if (!is_file($path)) continue; // un archivo que falta no es una modificación
+        $md5      = md5_file($path);
+        $expected = is_array($sums) ? ($sums['md5'] ?? null) : null;
+        $ok       = is_array($expected) ? in_array($md5, $expected, true) : ($md5 === $expected);
+        if (!$ok) $modified[] = sanitize_text_field($file);
+        if (count($modified) >= 200) break;
+    }
+    $result = ['integrity' => $modified ? 'modified' : 'verified', 'modifiedFiles' => $modified];
+    set_transient($cache_key, $result, $day);
+    return $result;
+}
+
 function nextguard_sync() {
     $auth_key   = nextguard_effective_key();
     $project_id = get_option(NEXTGUARD_OPTION_PROJECT_ID, '');
@@ -274,35 +319,54 @@ function nextguard_sync() {
     $active_slugs = (array) get_option('active_plugins', []);
     $components   = [];
 
+    // Spec 048: presupuesto de verificación de archivos por sync (los resultados
+    // quedan en caché 24 h, así que un sitio grande completa la verificación en
+    // pocos syncs sin colgar ninguno).
+    $integrity_budget_s = 20.0;
+    $integrity_max      = 40;
+    $integrity_started  = microtime(true);
+    $integrity_done     = 0;
+    $complete           = true;
+
     foreach ($all_plugins as $path => $data) {
-        $components[] = [
+        $dir  = dirname($path);
+        $slug = ($dir && $dir !== '.') ? $dir : basename($path, '.php');
+        $component = [
             'name'    => sanitize_text_field($data['Name']),
-            'slug'    => dirname($path) ?: basename($path, '.php'),
+            'slug'    => $slug,
             'version' => sanitize_text_field($data['Version']),
             'type'    => 'plugin',
+            // Inactivo no es inexistente: se manda igual, marcado.
             'active'  => in_array($path, $active_slugs, true),
+            'path'    => 'wp-content/plugins/' . (($dir && $dir !== '.') ? $dir : basename($path)),
         ];
+        if ($dir && $dir !== '.' && $integrity_done < $integrity_max && (microtime(true) - $integrity_started) < $integrity_budget_s) {
+            $integrity = nextguard_plugin_integrity($slug, (string) $component['version']);
+            $component['integrity']     = $integrity['integrity'];
+            $component['modifiedFiles'] = $integrity['modifiedFiles'];
+            $integrity_done++;
+        }
+        $components[] = $component;
     }
 
-    // Active theme
+    // Temas: TODOS los instalados, con su estado (spec 048). Un tema inactivo
+    // también deja archivos alcanzables.
     $theme = wp_get_theme();
-    $components[] = [
-        'name'    => $theme->get('Name'),
-        'slug'    => $theme->get_stylesheet(),
-        'version' => $theme->get('Version'),
-        'type'    => 'theme',
-        'active'  => true,
-    ];
-
-    // Parent theme if child theme active
-    if ($theme->parent()) {
-        $parent = $theme->parent();
+    $active_stylesheet = $theme->get_stylesheet();
+    $parent_stylesheet = $theme->parent() ? $theme->parent()->get_stylesheet() : null;
+    $themes = function_exists('wp_get_themes') ? (array) wp_get_themes() : [];
+    if (empty($themes)) {
+        $themes = [$active_stylesheet => $theme];
+        if ($theme->parent()) $themes[$parent_stylesheet] = $theme->parent();
+    }
+    foreach ($themes as $stylesheet => $t) {
         $components[] = [
-            'name'    => $parent->get('Name'),
-            'slug'    => $parent->get_stylesheet(),
-            'version' => $parent->get('Version'),
+            'name'    => sanitize_text_field((string) $t->get('Name')),
+            'slug'    => (string) $stylesheet,
+            'version' => sanitize_text_field((string) $t->get('Version')),
             'type'    => 'theme',
-            'active'  => true,
+            'active'  => ($stylesheet === $active_stylesheet || $stylesheet === $parent_stylesheet),
+            'path'    => 'wp-content/themes/' . $stylesheet,
         ];
     }
 
@@ -323,7 +387,12 @@ function nextguard_sync() {
         'phpVersion' => PHP_VERSION,
         'siteUrl'    => home_url(),
         'components' => $components,
+        'collector'  => ['version' => NEXTGUARD_VERSION, 'complete' => $complete],
     ];
+    $env_token = (string) get_option(NEXTGUARD_OPTION_ENV_TOKEN, '');
+    if ($env_token !== '' && strpos($env_token, 'vs_pe_') === 0) {
+        $payload['environmentToken'] = $env_token;
+    }
     if ($audit !== null) {
         $payload['audit'] = $audit;
     }
@@ -548,6 +617,18 @@ function nextguard_register_settings() {
     register_setting('nextguard_settings', NEXTGUARD_OPTION_API_KEY, [
         'sanitize_callback' => 'sanitize_text_field',
     ]);
+    // Spec 048: token de ambiente (opcional). Con él, el inventario de este
+    // sitio se asocia al ambiente correcto aunque su URL no coincida.
+    // Grupo propio: si compartiera grupo con la API key, guardar este
+    // formulario por options.php dejaría la clave en blanco.
+    register_setting('nextguard_env_settings', NEXTGUARD_OPTION_ENV_TOKEN, [
+        'sanitize_callback' => 'nextguard_sanitize_env_token',
+    ]);
+}
+
+function nextguard_sanitize_env_token($value): string {
+    $v = trim(sanitize_text_field((string) $value));
+    return preg_match('/^vs_pe_[a-f0-9]{64}$/', $v) ? $v : '';
 }
 
 function nextguard_settings_page() {
@@ -758,6 +839,25 @@ function nextguard_settings_page() {
             <?php wp_nonce_field('nextguard_manual_sync'); ?>
             <input type="hidden" name="nextguard_manual_sync" value="1" />
             <?php submit_button(__('Sync Now', 'nextguard'), 'secondary'); ?>
+        </form>
+
+        <hr />
+        <h2><?php _e('Environment', 'nextguard'); ?></h2>
+        <p style="max-width:780px;color:#374151;"><?php _e('Optional. Paste the environment token from NextGuard (Project → Environments) so this site\'s inventory is compared with the right environment even if its URL differs.', 'nextguard'); ?></p>
+        <form method="post" action="options.php">
+            <?php settings_fields('nextguard_env_settings'); ?>
+            <table class="form-table">
+                <tr>
+                    <th scope="row"><label for="nextguard_environment_token"><?php _e('Environment token', 'nextguard'); ?></label></th>
+                    <td>
+                        <input type="password" id="nextguard_environment_token" name="<?php echo esc_attr(NEXTGUARD_OPTION_ENV_TOKEN); ?>"
+                               value="<?php echo esc_attr((string) get_option(NEXTGUARD_OPTION_ENV_TOKEN, '')); ?>"
+                               class="regular-text" placeholder="vs_pe_..." autocomplete="off" />
+                        <p class="description"><?php _e('Starts with <code>vs_pe_</code>. Leave empty to match the environment by the site URL.', 'nextguard'); ?></p>
+                    </td>
+                </tr>
+            </table>
+            <?php submit_button(__('Save environment', 'nextguard'), 'secondary'); ?>
         </form>
 
         <hr />
